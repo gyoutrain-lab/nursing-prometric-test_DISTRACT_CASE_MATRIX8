@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SCFHS Clinical & Patient Safety Game Matrix</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .glass-card {
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(20, 184, 166, 0.4);
+      border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(20, 184, 166, 0.7);
+    }
+    .grid-cell {
+      transition: all 0.2s ease-in-out;
+    }
+    .grid-cell:hover {
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-between p-3 md:p-6 font-sans selection:bg-teal-500 selection:text-slate-900 custom-scrollbar">
+
+  <!-- Header & Navigation -->
+  <header class="w-full max-w-6xl glass-card rounded-2xl p-4 mb-4 flex flex-col md:flex-row justify-between items-center gap-4 border-b border-teal-500/30 shadow-2xl">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="bg-teal-500/20 text-teal-300 text-xs font-bold px-2.5 py-0.5 rounded-full border border-teal-500/40">SCFHS & NCLEX RN Standard</span>
+        <h1 class="text-xl md:text-2xl font-black bg-gradient-to-r from-teal-400 via-emerald-300 to-amber-300 bg-clip-text text-transparent">
+          Clinical Decision Matrix Game
+        </h1>
+      </div>
+      <p class="text-xs text-slate-400 mt-0.5">Interactive Multi-Domain Clinical Scenario & Action Matching Grid</p>
+    </div>
+    
+    <!-- Mode Selectors -->
+    <div class="flex bg-slate-900/90 p-1 rounded-xl border border-slate-800 text-xs font-semibold shadow-inner">
+      <button id="mode-matrix-btn" onclick="switchMode('matrix')" class="px-3 py-1.5 rounded-lg text-teal-400 bg-slate-800 transition">Grid Matrix Challenge</button>
+      <button id="mode-speed-btn" onclick="switchMode('speed')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition">Speed Match</button>
+      <button id="mode-flag-btn" onclick="switchMode('flag')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition">Safety Override</button>
+    </div>
+
+    <!-- Score & Timer -->
+    <div class="flex items-center gap-3">
+      <div id="timer-display" class="bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono text-sm px-3 py-1.5 rounded-lg font-bold">
+        ⏱️ 45s
+      </div>
+      <div id="score-display" class="bg-teal-500/10 border border-teal-500/30 text-teal-400 font-mono text-sm px-3 py-1.5 rounded-lg font-bold">
+        Score: 0
+      </div>
+    </div>
+  </header>
+
+  <!-- Game Arena -->
+  <main class="w-full max-w-6xl flex-1 flex flex-col justify-center">
+
+    <!-- MODE 1: GRID MATRIX CHALLENGE -->
+    <section id="game-mode-matrix" class="glass-card rounded-2xl p-4 md:p-6 shadow-2xl relative overflow-hidden">
+      <div class="flex justify-between items-center mb-4">
+        <span class="text-xs font-bold uppercase tracking-wider text-teal-400 bg-teal-500/10 px-2.5 py-1 rounded-full border border-teal-500/20">
+          Mode 1: Complete the 4-Domain Action Matrix
+        </span>
+        <span id="matrix-set-counter" class="text-xs text-slate-400 font-mono">Set 1 / 10</span>
+      </div>
+
+      <!-- Trigger Scenario Box -->
+      <div class="bg-slate-900/90 rounded-xl p-4 mb-4 border border-slate-800 shadow-inner">
+        <div class="flex justify-between items-start mb-1">
+          <span class="text-xs text-amber-400 font-bold uppercase tracking-wider">Trigger / Clinical Situation:</span>
+          <span id="matrix-category" class="text-[10px] uppercase font-bold bg-slate-800 text-teal-300 px-2 py-0.5 rounded border border-slate-700">Domain</span>
+        </div>
+        <p id="matrix-scenario-text" class="text-sm md:text-base text-slate-100 font-bold leading-relaxed bg-slate-950/80 p-3 rounded-lg border border-slate-800">Loading scenario...</p>
+      </div>
+
+      <!-- Matrix Grid Columns (SBAR, Safety, Communication, Competency) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <!-- Domain A: SBAR -->
+        <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+          <div class="text-xs font-bold text-teal-400 mb-2 uppercase flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-teal-400"></span> A. SBAR Protocol
+          </div>
+          <div id="domain-a-slot" class="min-h-[90px] bg-slate-950/70 rounded-lg p-2.5 border border-dashed border-slate-700 flex items-center justify-center text-xs text-slate-500 text-center">
+            Select matching option below
+          </div>
+        </div>
+
+        <!-- Domain B: Safety -->
+        <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+          <div class="text-xs font-bold text-emerald-400 mb-2 uppercase flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span> B. Patient Safety (NPSG)
+          </div>
+          <div id="domain-b-slot" class="min-h-[90px] bg-slate-950/70 rounded-lg p-2.5 border border-dashed border-slate-700 flex items-center justify-center text-xs text-slate-500 text-center">
+            Select matching option below
+          </div>
+        </div>
+
+        <!-- Domain C: De-escalation -->
+        <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+          <div class="text-xs font-bold text-amber-400 mb-2 uppercase flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span> C. De-escalation
+          </div>
+          <div id="domain-c-slot" class="min-h-[90px] bg-slate-950/70 rounded-lg p-2.5 border border-dashed border-slate-700 flex items-center justify-center text-xs text-slate-500 text-center">
+            Select matching option below
+          </div>
+        </div>
+
+        <!-- Domain D: Competency -->
+        <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+          <div class="text-xs font-bold text-indigo-400 mb-2 uppercase flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-indigo-400"></span> D. Competency Focus
+          </div>
+          <div id="domain-d-slot" class="min-h-[90px] bg-slate-950/70 rounded-lg p-2.5 border border-dashed border-slate-700 flex items-center justify-center text-xs text-slate-500 text-center">
+            Select matching option below
+          </div>
+        </div>
+      </div>
+
+      <!-- Target Selection Deck -->
+      <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+        <div class="text-xs font-bold text-slate-400 mb-2 uppercase">Action Pool (Click to assign to target domain):</div>
+        <div id="matrix-option-pool" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
+      </div>
+
+      <button id="submit-matrix-btn" onclick="submitMatrixSet()" class="w-full mt-4 py-3 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 font-bold text-white rounded-xl shadow-lg transition active:scale-98">
+        Validate Matrix Match
+      </button>
+    </section>
+
+    <!-- MODE 2: SPEED MATCH -->
+    <section id="game-mode-speed" class="hidden glass-card rounded-2xl p-5 md:p-6 shadow-2xl">
+      <div class="flex justify-between items-center mb-3">
+        <span class="text-xs font-bold uppercase tracking-wider text-teal-400 bg-teal-500/10 px-2.5 py-1 rounded-full border border-teal-500/20">
+          Mode 2: Speed Dual-Option Matching
+        </span>
+        <span id="speed-case-counter" class="text-xs text-slate-400 font-mono">Case 1 / 50</span>
+      </div>
+
+      <div class="bg-slate-900/90 rounded-xl p-4 mb-4 border border-slate-800">
+        <h2 id="speed-condition-title" class="text-lg font-bold text-amber-300 mb-1">Loading...</h2>
+        <div class="text-xs text-teal-300 font-semibold mb-1 uppercase tracking-wider">Clinical Presentation / Symptoms:</div>
+        <p id="speed-symptoms" class="text-xs md:text-sm text-slate-200 leading-relaxed bg-slate-950/70 p-3 rounded-lg border border-slate-800 font-mono">Loading clinical presentation...</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-teal-400 mb-2 uppercase">1. Priority Interventions</label>
+          <div id="speed-tx-options" class="space-y-2"></div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-emerald-400 mb-2 uppercase">2. Target Pharmacotherapy / Protocol</label>
+          <div id="speed-drug-options" class="space-y-2"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODE 3: SAFETY OVERRIDE -->
+    <section id="game-mode-flag" class="hidden glass-card rounded-2xl p-5 md:p-6 shadow-2xl">
+      <div class="flex justify-between items-center mb-4">
+        <span class="text-xs font-bold uppercase tracking-wider text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/20">
+          Mode 3: Dynamic Safety & Intervention Override
+        </span>
+        <span id="flag-case-counter" class="text-xs text-slate-400 font-mono">Case 1 / 50</span>
+      </div>
+
+      <div class="bg-slate-900/90 rounded-xl p-4 mb-6 border border-slate-800">
+        <div class="flex items-center gap-2 text-rose-400 font-bold text-sm mb-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          High-Risk Clinical Vignette
+        </div>
+        <p id="flag-scenario" class="text-xs md:text-sm text-slate-200 leading-relaxed font-mono bg-slate-950/70 p-3 rounded-lg border border-slate-800"></p>
+      </div>
+
+      <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 mb-6 text-center">
+        <p class="text-xs text-slate-300 uppercase font-semibold">Proposed Physician Order / Interventional Procedure:</p>
+        <p id="flag-proposed-action" class="text-base font-bold text-amber-300 mt-0.5 underline">Loading...</p>
+      </div>
+
+      <div id="flag-button-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </section>
+
+  </main>
+
+  <script>
+    class SoundEngine {
+      constructor() { this.ctx = null; }
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+      }
+      playCorrect() {
+        this.init();
+        const now = this.ctx.currentTime;
+        [523.25, 659.25, 783.99, 1046.50].forEach((f, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.frequency.setValueAtTime(f, now + idx * 0.05);
+          gain.gain.setValueAtTime(0.12, now + idx * 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.05 + 0.18);
+          osc.connect(gain); gain.connect(this.ctx.destination);
+          osc.start(now + idx * 0.05); osc.stop(now + idx * 0.05 + 0.18);
+        });
+      }
+      playWrong() {
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(140, now);
+        osc.frequency.linearRampToValueAtTime(80, now + 0.3);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(now); osc.stop(now + 0.3);
+      }
+    }
+
+    const sound = new SoundEngine();
+
+    // 4-DOMAIN CLINICAL MATRIX DATA
+    const fullMatrixData = [
+      {
+        id: 1,
+        trigger: "Post-op patient reports sudden dyspnea (SpO2 drops to 88%) on admission to unit.",
+        category: "Acute Respiratory",
+        sbar: "Assessment: Patient exhibits acute respiratory compromise post-procedure.",
+        safety: "Goal 1 & 2: Verify 2 patient identifiers; initiate emergency oxygen protocol immediately.",
+        deescalation: "Reassurance: I am placing oxygen on you now to help you breathe easier. Stay calm, I am right here with you.",
+        competency: "Acute Airway Management & Escalation Protocol",
+        tx: "Bimanual Uterine Massage + High Flow O2",
+        drug: "Oxytocin (Pitocin) 20 Units in 1L NS IV infusion",
+        proposedSafeAction: "Initiate High-Flow Humidified Oxygen via Non-Rebreather Mask & Notify Provider",
+        proposedUnsafeAction: "Administer Rapid Sedative IV to reduce patient agitation",
+        isProposedUnsafe: false
+      },
+      {
+        id: 2,
+        trigger: "Anxious family member complaining loudly in hallway about a delayed medication dose.",
+        category: "Service Recovery",
+        sbar: "Background: Medication delayed due to pharmacy verification process.",
+        safety: "Goal 2: Clarify and read-back order verification before administration.",
+        deescalation: "LAST Method: Listen actively, Apologize for wait, Solve (check status), Thank for patience.",
+        competency: "Conflict De-escalation & Service Recovery",
+        tx: "Medication Reconciliation & Active Listening",
+        drug: "Read-Back Verification Protocol",
+        proposedSafeAction: "Apply LAST Method & Escalate to Pharmacy for Priority Verification",
+        proposedUnsafeAction: "Administer Unverified High-Alert Medication directly without pharmacy clearance",
+        isProposedUnsafe: true
+      },
+      {
+        id: 3,
+        trigger: "Patient scheduled for bedside procedure has similar name to another ward patient.",
+        category: "Patient Identification",
+        sbar: "Situation: Pre-procedure time-out check required prior to starting bedside intervention.",
+        safety: "Goal 1 & 3: Double-identifier verification; high-alert medication double-check.",
+        deescalation: "Professional Intro: Good morning, I am validating your full name and DOB for your safety.",
+        competency: "Universal Safety Protocol & Error Prevention",
+        tx: "Pre-procedure Time-Out & Dual Verification",
+        drug: "Independent Double-Check Protocol",
+        proposedSafeAction: "Perform Universal Time-Out & Verify DOB with Wristband",
+        proposedUnsafeAction: "Proceed with procedure based solely on verbal room number confirmation",
+        isProposedUnsafe: true
+      },
+      {
+        id: 4,
+        trigger: "Handover shift transition involving a complex ICU transfer to step-down ward.",
+        category: "Continuity of Care",
+        sbar: "Recommendation: I recommend continuous vitals monitoring for 4 hours post-transfer.",
+        safety: "Goal 2: Structured verbal handover using SBAR to prevent omitted clinical details.",
+        deescalation: "Warm Handover: Introduce the receiving nurse directly at the bedside before leaving.",
+        competency: "Transfer Continuity & Handover Accuracy",
+        tx: "Bedside SBAR Handover & Vitals Calibration",
+        drug: "Continuous Infusion Rate Audit",
+        proposedSafeAction: "Conduct Bedside SBAR Handover with Receiving Nurse",
+        proposedUnsafeAction: "Leave written chart at desk without verbal nursing handover",
+        isProposedUnsafe: true
+      }
+    ];
+
+    let currentMode = 'matrix';
+    let score = 0;
+    let timer = 45;
+    let timerInterval = null;
+    let currentMatrixIdx = 0;
+    let selectedSlots = { a: null, b: null, c: null, d: null };
+
+    function shuffle(arr) {
+      return [...arr].sort(() => Math.random() - 0.5);
+    }
+
+    function startTimer(seconds) {
+      clearInterval(timerInterval);
+      timer = seconds;
+      document.getElementById("timer-display").innerText = `⏱️ ${timer}s`;
+      timerInterval = setInterval(() => {
+        timer--;
+        document.getElementById("timer-display").innerText = `⏱️ ${timer}s`;
+        if (timer <= 0) {
+          clearInterval(timerInterval);
+          sound.playWrong();
+          nextCase();
+        }
+      }, 1000);
+    }
+
+    function switchMode(mode) {
+      currentMode = mode;
+      document.getElementById("game-mode-matrix").classList.add("hidden");
+      document.getElementById("game-mode-speed").classList.add("hidden");
+      document.getElementById("game-mode-flag").classList.add("hidden");
+
+      document.getElementById("mode-matrix-btn").className = "px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition";
+      document.getElementById("mode-speed-btn").className = "px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition";
+      document.getElementById("mode-flag-btn").className = "px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition";
+
+      if (mode === 'matrix') {
+        document.getElementById("game-mode-matrix").classList.remove("hidden");
+        document.getElementById("mode-matrix-btn").className = "px-3 py-1.5 rounded-lg text-teal-400 bg-slate-800 transition shadow";
+        loadMatrixCase();
+      } else if (mode === 'speed') {
+        document.getElementById("game-mode-speed").classList.remove("hidden");
+        document.getElementById("mode-speed-btn").className = "px-3 py-1.5 rounded-lg text-teal-400 bg-slate-800 transition shadow";
+        loadSpeedCase();
+      } else if (mode === 'flag') {
+        document.getElementById("game-mode-flag").classList.remove("hidden");
+        document.getElementById("mode-flag-btn").className = "px-3 py-1.5 rounded-lg text-rose-400 bg-slate-800 transition shadow";
+        loadFlagCase();
+      }
+    }
+
+    // MODE 1: MATRIX CHALLENGE LOGIC
+    function loadMatrixCase() {
+      startTimer(45);
+      const c = fullMatrixData[currentMatrixIdx];
+      document.getElementById("matrix-set-counter").innerText = `Set ${currentMatrixIdx + 1} / ${fullMatrixData.length}`;
+      document.getElementById("matrix-category").innerText = c.category;
+      document.getElementById("matrix-scenario-text").innerText = c.trigger;
+
+      selectedSlots = { a: null, b: null, c: null, d: null };
+      resetSlotUI('domain-a-slot');
+      resetSlotUI('domain-b-slot');
+      resetSlotUI('domain-c-slot');
+      resetSlotUI('domain-d-slot');
+
+      const options = shuffle([
+        { domain: 'a', text: c.sbar },
+        { domain: 'b', text: c.safety },
+        { domain: 'c', text: c.deescalation },
+        { domain: 'd', text: c.competency }
+      ]);
+
+      const pool = document.getElementById("matrix-option-pool");
+      pool.innerHTML = "";
+      options.forEach((opt, idx) => {
+        const btn = document.createElement("button");
+        btn.className = "w-full text-left p-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs text-slate-200 transition grid-cell";
+        btn.innerText = opt.text;
+        btn.onclick = () => assignOptionToSlot(opt, btn);
+        pool.appendChild(btn);
+      });
+    }
+
+    function resetSlotUI(slotId) {
+      document.getElementById(slotId).innerHTML = "Select matching option below";
+      document.getElementById(slotId).className = "min-h-[90px] bg-slate-950/70 rounded-lg p-2.5 border border-dashed border-slate-700 flex items-center justify-center text-xs text-slate-500 text-center";
+    }
+
+    function assignOptionToSlot(opt, btnElement) {
+      const slotMap = { a: 'domain-a-slot', b: 'domain-b-slot', c: 'domain-c-slot', d: 'domain-d-slot' };
+      const targetSlotId = slotMap[opt.domain];
+      const slotEl = document.getElementById(targetSlotId);
+
+      selectedSlots[opt.domain] = opt.text;
+      slotEl.innerHTML = `<span class="text-xs font-semibold text-slate-100">${opt.text}</span>`;
+      slotEl.className = "min-h-[90px] bg-teal-500/10 rounded-lg p-2.5 border border-teal-500/40 flex items-center justify-center text-xs text-teal-200 text-center font-medium shadow";
+
+      btnElement.classList.add("opacity-40", "pointer-events-none");
+    }
+
+    function submitMatrixSet() {
+      const c = fullMatrixData[currentMatrixIdx];
+      const isComplete = selectedSlots.a && selectedSlots.b && selectedSlots.c && selectedSlots.d;
+
+      if (isComplete &&
+          selectedSlots.a === c.sbar &&
+          selectedSlots.b === c.safety &&
+          selectedSlots.c === c.deescalation &&
+          selectedSlots.d === c.competency) {
+        score += 200;
+        sound.playCorrect();
+      } else {
+        sound.playWrong();
+      }
+
+      document.getElementById("score-display").innerText = `Score: ${score}`;
+      nextCase();
+    }
+
+    // MODE 2: SPEED MATCH LOGIC
+    function loadSpeedCase() {
+      startTimer(30);
+      const c = fullMatrixData[currentMatrixIdx];
+      document.getElementById("speed-case-counter").innerText = `Case ${currentMatrixIdx + 1} / ${fullMatrixData.length}`;
+      document.getElementById("speed-condition-title").innerText = c.category;
+      document.getElementById("speed-symptoms").innerText = c.trigger;
+
+      const txOptions = shuffle([c.tx, "Administer Non-indicated Sedation", "Standard Observation Only"]);
+      const drugOptions = shuffle([c.drug, "Morphine Sulfate 10mg IV Push", "Placebo Saline Flush"]);
+
+      renderMatchButtons("speed-tx-options", txOptions);
+      renderMatchButtons("speed-drug-options", drugOptions);
+    }
+
+    function renderMatchButtons(containerId, options) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = "";
+      options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.className = "w-full text-left p-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-semibold text-slate-200 transition";
+        btn.innerText = opt;
+        btn.onclick = () => {
+          score += 50;
+          sound.playCorrect();
+          document.getElementById("score-display").innerText = `Score: ${score}`;
+          nextCase();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    // MODE 3: SAFETY OVERRIDE LOGIC
+    function loadFlagCase() {
+      startTimer(25);
+      const c = fullMatrixData[currentMatrixIdx];
+      document.getElementById("flag-case-counter").innerText = `Case ${currentMatrixIdx + 1} / ${fullMatrixData.length}`;
+      document.getElementById("flag-scenario").innerText = `Category: ${c.category}\nTrigger Event: ${c.trigger}\nRecommended Protocol: ${c.sbar}`;
+
+      const isUnsafeProposal = Math.random() < 0.5;
+      const proposedAction = isUnsafeProposal ? c.proposedUnsafeAction : c.proposedSafeAction;
+      
+      document.getElementById("flag-proposed-action").innerText = proposedAction;
+
+      const container = document.getElementById("flag-button-container");
+      container.innerHTML = "";
+
+      const safeBtn = document.createElement("button");
+      safeBtn.className = "p-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl font-bold text-slate-200 transition text-sm flex items-center justify-center gap-2";
+      safeBtn.innerText = "✅ Safe to Execute Order";
+      safeBtn.onclick = () => checkFlagAnswer(false, isUnsafeProposal);
+
+      const unsafeBtn = document.createElement("button");
+      unsafeBtn.className = "p-4 bg-rose-600/30 hover:bg-rose-600/50 border border-rose-500 text-rose-200 rounded-xl font-bold transition text-sm flex items-center justify-center gap-2";
+      unsafeBtn.innerText = "🛑 CONTRAINDICATED (Stop & Report)";
+      unsafeBtn.onclick = () => checkFlagAnswer(true, isUnsafeProposal);
+
+      const buttons = shuffle([safeBtn, unsafeBtn]);
+      buttons.forEach(btn => container.appendChild(btn));
+    }
+
+    function checkFlagAnswer(userSaidUnsafe, actualIsUnsafe) {
+      if (userSaidUnsafe === actualIsUnsafe) {
+        score += 150;
+        sound.playCorrect();
+      } else {
+        sound.playWrong();
+      }
+      document.getElementById("score-display").innerText = `Score: ${score}`;
+      nextCase();
+    }
+
+    function nextCase() {
+      clearInterval(timerInterval);
+      currentMatrixIdx = (currentMatrixIdx + 1) % fullMatrixData.length;
+      setTimeout(() => {
+        switchMode(currentMode);
+      }, 300);
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      loadMatrixCase();
+    });
+  </script>
+</body>
+</html>
